@@ -22,10 +22,6 @@ Generator: flit {version}
 Root-Is-Purelib: true
 """.format(version=__version__)
 
-class EntryPointsConflict(ValueError):
-    def __str__(self):
-        return ('Please specify console_scripts entry points or scripts in '
-            'flit.ini, not both.')
 
 class WheelBuilder:
     def __init__(self, ini_path, target_fp):
@@ -118,24 +114,9 @@ class WheelBuilder:
         log.info('Writing metadata files')
         dist_info = self.dist_version + '.dist-info'
 
-        # Write entry points
-        if self.ini_info['scripts']:
-            cp = configparser.ConfigParser()
-
-            if self.ini_info['entry_points_file'] is not None:
-                cp.read(str(self.ini_info['entry_points_file']))
-                if 'console_scripts' in cp:
-                    raise EntryPointsConflict
-
-            cp['console_scripts'] = {k: '%s:%s' % v
-                                     for (k,v) in self.ini_info['scripts'].items()}
-            log.debug('Writing entry_points.txt in %s', dist_info)
+        if self.ini_info['entrypoints']:
             with self._write_to_zip(dist_info + '/entry_points.txt') as f:
-                cp.write(f)
-
-        elif self.ini_info['entry_points_file'] is not None:
-            self._add_file(self.ini_info['entry_points_file'],
-                           dist_info + '/entry_points.txt')
+                common.write_entry_points(self.ini_info['entrypoints'], f)
 
         with self._write_to_zip(dist_info + '/WHEEL') as f:
             f.write(wheel_file_template)
