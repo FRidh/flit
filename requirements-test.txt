@@ -2,4 +2,5 @@ requests
 testpath
 responses
 docutils
+toml
 pytest>=2.7.3
